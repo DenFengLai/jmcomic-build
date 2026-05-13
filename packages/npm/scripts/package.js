@@ -98,7 +98,10 @@ function publish(dir, name) {
   console.log(`🚀 publishing ${name}`)
   execSync("npm publish --access public", {
     cwd: dir,
-    stdio: "inherit"
+    stdio: "inherit",
+    env: {
+      ...process.env
+    }
   })
 }
 

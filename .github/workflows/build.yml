@@ -30,7 +30,6 @@ on:
 
   schedule:
     - cron: "0 2 * * *"
-      timezone: "Asia/Tokyo"
 
 permissions:
   contents: read
