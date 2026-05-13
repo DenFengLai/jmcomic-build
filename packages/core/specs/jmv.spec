@@ -2,7 +2,7 @@
 
 
 a = Analysis(
-    ['entry/entry_jmv.py'],
+    ['../entry/entry_jmv.py'],
     pathex=[],
     binaries=[],
     datas=[],
