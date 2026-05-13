@@ -340,7 +340,7 @@ jobs:
 
       - name: Modify the version number of jmcomic
         env:
-          VERSION: ${{ needs.resolve.outputs.version }}
+          VERSION: ${{ needs.resolve.outputs.full_version }}
         run: node scripts/inject-version.js
 
       - name: Publish npm of jmcomic
