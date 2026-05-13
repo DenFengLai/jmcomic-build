@@ -15,6 +15,10 @@ on:
         description: '可选，留空则自动读取 PyPI 最新版本'
         required: false
         default: ''
+      suffix:
+        description: '补丁后缀，例如 hotfix、fix.1、rebuild'
+        required: false
+        default: ''
       force_build:
         description: '忽略“已发版”检查，强制打包但不发版（只适合 build 模式）'
         type: boolean
@@ -54,6 +58,7 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           INPUT_MODE: ${{ github.event_name == 'workflow_dispatch' && inputs.mode || 'release' }}
           INPUT_VERSION: ${{ github.event_name == 'workflow_dispatch' && inputs.version || '' }}
+          INPUT_SUFFIX: ${{ github.event_name == 'workflow_dispatch' && inputs.suffix || '' }}
           FORCE_BUILD: ${{ github.event_name == 'workflow_dispatch' && inputs.force_build || 'false' }}
         shell: bash
         run: |
@@ -75,7 +80,11 @@ jobs:
           )"
           fi
 
-          TAG="v${VERSION}"
+          if [ -n "$INPUT_SUFFIX" ]; then
+            TAG="v${VERSION}-${INPUT_SUFFIX}"
+          else
+            TAG="v${VERSION}"
+          fi
 
           RELEASE_ASSET_COUNT="-1"
           if gh api "repos/${GITHUB_REPOSITORY}/releases/tags/${TAG}" --jq '.assets | length' > /tmp/release_assets.txt 2>/dev/null; then
@@ -155,6 +164,7 @@ jobs:
       - name: Build
         run: |
           pyinstaller jmcomic.spec
+          pyinstaller jmv.spec
 
       - name: Package artifact
         run: |
@@ -193,6 +203,7 @@ jobs:
         shell: sh
         run: |
           pyinstaller jmcomic.spec
+          pyinstaller jmv.spec
 
       - name: Package artifact
         run: |
@@ -233,6 +244,7 @@ jobs:
         shell: pwsh
         run: |
           pyinstaller jmcomic.spec
+          pyinstaller jmv.spec
 
       - name: Package artifact
         shell: pwsh
@@ -270,6 +282,7 @@ jobs:
       - name: Build
         run: |
           pyinstaller jmcomic.spec
+          pyinstaller jmv.spec
 
       - name: Package artifact
         run: |
@@ -309,6 +322,7 @@ jobs:
   #       - name: Build
   #         run: |
   #           pyinstaller jmcomic.spec
+              # pyinstaller jmv.spec
 
   #       - name: Package artifact
   #         run: |

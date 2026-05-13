@@ -2,7 +2,7 @@
 
 
 a = Analysis(
-    ['entry/entry_jmcomic.py'],
+    ['entry/entry_jmv.py'],
     pathex=[],
     binaries=[],
     datas=[],
@@ -22,7 +22,7 @@ exe = EXE(
     a.binaries,
     a.datas,
     [],
-    name='jmcomic',
+    name='jmv',
     debug=False,
     bootloader_ignore_signals=False,
     strip=False,
