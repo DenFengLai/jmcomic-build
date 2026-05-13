@@ -335,5 +335,5 @@ jobs:
         env:
           VERSION: ${{ needs.resolve.outputs.full_version }}
           RELEASE_ASSETS_DIR: release-assets
-          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
         run: node packages/npm/scripts/package.js
