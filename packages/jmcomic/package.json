@@ -1,0 +1,28 @@
+{
+  "name": "@jmcomic/jmcomic",
+  "version": "__VERSION__",
+  "keywords": [
+    "JMComic",
+    "禁漫",
+    "jm"
+  ],
+  "main": "index.js",
+  "bin": {
+    "jmcomic": "cli.js"
+  },
+  "author": "hect0x7,jmcomic",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/hect0x7/JMComic-Crawler-Python"
+  },
+  "license": "MIT",
+  "files": [
+    "index.js"
+  ],
+  "optionalDependencies": {
+    "@jmcomic/jmcomic-linux-gnu": "__VERSION__",
+    "@jmcomic/jmcomic-linux-musl": "__VERSION__",
+    "@jmcomic/jmcomic-windows-x64": "__VERSION__",
+    "@jmcomic/jmcomic-macos-arm64": "__VERSION__"
+  }
+}

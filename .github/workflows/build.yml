@@ -336,4 +336,16 @@ jobs:
           VERSION: ${{ needs.resolve.outputs.full_version }}
           RELEASE_ASSETS_DIR: release-assets
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-        run: node packages/npm/scripts/package.js
+        run: node scripts/package.js
+
+      - name: Modify the version number of jmcomic
+        env:
+          VERSION: ${{ needs.resolve.outputs.version }}
+        run: node scripts/inject-version.js
+
+      - name: Publish npm of jmcomic
+        working-directory: packages/jmcomic
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: npm publish --access public
+        

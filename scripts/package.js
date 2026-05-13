@@ -36,7 +36,7 @@ const PLATFORMS = [
     cpu: "x64",
   },
   {
-    id: "windows-x86_64",
+    id: "windows-x64",
     os: "win32",
     cpu: "x64",
     ext: ".exe",
@@ -113,7 +113,7 @@ ensure(OUT_DIR)
 for (const cli of CLIS) {
   for (const p of PLATFORMS) {
 
-    const pkgName = `@kaguyajs/${cli.name}-${p.id}`
+    const pkgName = `@jmcomic/${cli.name}-${p.id}`
     const outDir = path.join(OUT_DIR, `${cli.name}-${p.id}`)
     const binDir = path.join(outDir, "bin")
 
