@@ -158,10 +158,10 @@ jobs:
             platform: linux-gnu
             artifact_suffix: linux-gnu
 
-          - id: windows-x86_64
+          - id: windows-x64
             runs_on: windows-latest
-            platform: windows-x86_64
-            artifact_suffix: windows-x86_64
+            platform: windows-x64
+            artifact_suffix: windows-x64
 
           - id: macos-arm64
             runs_on: macos-latest
