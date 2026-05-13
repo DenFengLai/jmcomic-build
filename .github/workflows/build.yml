@@ -329,7 +329,7 @@ jobs:
           registry-url: https://registry.npmjs.org
 
       # - name: Install npm dependencies
-      #   working-directory: npm
+      #   working-directory: packages/  npm
       #   run: npm ci
 
       - name: Build and publish npm platform packages
@@ -337,4 +337,4 @@ jobs:
           VERSION: ${{ needs.resolve.outputs.full_version }}
           RELEASE_ASSETS_DIR: release-assets
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
-        run: node npm/scripts/package.js
+        run: node packages/npm/scripts/package.js
