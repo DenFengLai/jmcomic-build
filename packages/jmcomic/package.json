@@ -16,6 +16,7 @@
     "url": "https://github.com/hect0x7/JMComic-Crawler-Python"
   },
   "license": "MIT",
+  "type": "module",
   "files": [
     "index.js"
   ],

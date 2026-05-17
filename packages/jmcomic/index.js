@@ -1,5 +1,8 @@
 import path from "path"
 import { execFileSync } from "child_process"
+import { createRequire } from "module"
+
+const require = createRequire(import.meta.url)
 
 // 找 binary
 function getBinary() {
@@ -30,7 +33,6 @@ function getBinary() {
 
 const bin = getBinary()
 
-// 核心执行函数（API）
 export function run(input) {
   const argv = Array.isArray(input)
     ? input
@@ -41,7 +43,6 @@ export function run(input) {
   })
 }
 
-// 给用户用的 API
 export function jmcomic(input) {
   return run(input)
 }
