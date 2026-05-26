@@ -8,17 +8,17 @@ const ASSETS_DIR = process.env.RELEASE_ASSETS_DIR || "release-assets"
 const OUT_DIR = path.resolve("packages/npm")
 
 // =========================
-// CLI 定义（关键：分开 jmcomic / jmv）
+// CLI 定义
 // =========================
 const CLIS = [
   {
     name: "jmcomic",
-    bin: "jmcomic",
+    bin: "jmcomic"
   },
   {
     name: "jmv",
-    bin: "jmv",
-  },
+    bin: "jmv"
+  }
 ]
 
 // =========================
@@ -28,24 +28,24 @@ const PLATFORMS = [
   {
     id: "linux-gnu",
     os: "linux",
-    cpu: "x64",
+    cpu: "x64"
   },
   {
     id: "linux-musl",
     os: "linux",
-    cpu: "x64",
+    cpu: "x64"
   },
   {
     id: "windows-x64",
     os: "win32",
     cpu: "x64",
-    ext: ".exe",
+    ext: ".exe"
   },
   {
     id: "macos-arm64",
     os: "darwin",
-    cpu: "arm64",
-  },
+    cpu: "arm64"
+  }
 ]
 
 // =========================
@@ -55,7 +55,11 @@ function ensure(dir) {
   fs.mkdirSync(dir, { recursive: true })
 }
 
-// 找 binary（基于你 CI artifact 命名规则）
+function getBinaryName(cli, platform) {
+  return platform.os === "win32" ? `${cli.bin}.exe` : cli.bin
+}
+
+// 找 binary（基于 CI artifact 命名规则）
 function findBinary(cli, platformId) {
   const files = fs.readdirSync(ASSETS_DIR)
 
@@ -65,23 +69,51 @@ function findBinary(cli, platformId) {
   )
 
   if (!match) {
-    throw new Error(`❌ Missing binary: ${cli} - ${platformId}`)
+    throw new Error(`Missing binary: ${cli} - ${platformId}`)
   }
 
   return path.join(ASSETS_DIR, match)
 }
 
+// 写 index.js
+function writeIndexJs(dir, cli, platform) {
+  const binName = getBinaryName(cli, platform)
+
+  const content = `const path = require("path")
+
+const binary = path.join(__dirname, "bin", ${JSON.stringify(binName)})
+
+function getBinaryPath() {
+  return binary
+}
+
+module.exports = binary
+module.exports.default = binary
+module.exports.binary = binary
+module.exports.getBinaryPath = getBinaryPath
+`
+
+  fs.writeFileSync(path.join(dir, "index.js"), content)
+}
+
 // 写 package.json
 function writePackageJson(dir, name, platform, cli) {
+  const binName = getBinaryName(cli, platform)
+
   const pkg = {
     name,
     version: VERSION,
     os: [platform.os],
     cpu: [platform.cpu],
-    bin: {
-      [cli.bin]: `bin/${cli.bin}${platform.os === "win32" ? ".exe" : ""}`
+    main: "./index.js",
+    exports: {
+      ".": "./index.js",
+      "./bin/*": "./bin/*"
     },
-    files: ["bin"],
+    bin: {
+      [cli.bin]: `./bin/${binName}`
+    },
+    files: ["bin", "index.js"],
     publishConfig: {
       access: "public"
     }
@@ -95,13 +127,10 @@ function writePackageJson(dir, name, platform, cli) {
 
 // publish
 function publish(dir, name) {
-  console.log(`🚀 publishing ${name}`)
+  console.log(`Publishing ${name}`)
   execSync("npm publish --access public", {
     cwd: dir,
-    stdio: "inherit",
-    // env: {
-    //   ...process.env
-    // }
+    stdio: "inherit"
   })
 }
 
@@ -112,32 +141,25 @@ ensure(OUT_DIR)
 
 for (const cli of CLIS) {
   for (const p of PLATFORMS) {
-
     const pkgName = `@jmcomic/${cli.name}-${p.id}`
     const outDir = path.join(OUT_DIR, `${cli.name}-${p.id}`)
     const binDir = path.join(outDir, "bin")
 
     ensure(binDir)
 
-    // 找到对应 binary
     const src = findBinary(cli.name, p.id)
-
-    const binName = p.os === "win32"
-      ? `${cli.bin}.exe`
-      : cli.bin
-
+    const binName = getBinaryName(cli, p)
     const dst = path.join(binDir, binName)
 
     fs.copyFileSync(src, dst)
 
-    // 写 package.json
+    writeIndexJs(outDir, cli, p)
     writePackageJson(outDir, pkgName, p, cli)
 
-    console.log(`📦 built ${pkgName}`)
+    console.log(`Built ${pkgName}`)
 
-    // 发布
     publish(outDir, pkgName)
   }
 }
 
-console.log("🎉 all packages published")
+console.log("All packages published")
