@@ -25,25 +25,25 @@ export function getBinaryPath() {
   const platform = process.platform
 
   if (platform === "win32") {
-    const p = require.resolve("@kaguyajs/jmcomic-windows-x64")
+    const p = require.resolve("@jmcomic/jmcomic-windows-x64")
     cachedBinaryPath = path.join(path.dirname(p), "bin/jmcomic.exe")
     return cachedBinaryPath
   }
 
   if (platform === "linux") {
     try {
-      const p = require.resolve("@kaguyajs/jmcomic-linux-gnu")
+      const p = require.resolve("@jmcomic/jmcomic-linux-gnu")
       cachedBinaryPath = path.join(path.dirname(p), "bin/jmcomic")
       return cachedBinaryPath
     } catch {
-      const p = require.resolve("@kaguyajs/jmcomic-linux-musl")
+      const p = require.resolve("@jmcomic/jmcomic-linux-musl")
       cachedBinaryPath = path.join(path.dirname(p), "bin/jmcomic")
       return cachedBinaryPath
     }
   }
 
   if (platform === "darwin") {
-    const p = require.resolve("@kaguyajs/jmcomic-macos-arm64")
+    const p = require.resolve("@jmcomic/jmcomic-macos-arm64")
     cachedBinaryPath = path.join(path.dirname(p), "bin/jmcomic")
     return cachedBinaryPath
   }
