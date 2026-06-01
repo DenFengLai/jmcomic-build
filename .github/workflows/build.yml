@@ -228,7 +228,6 @@ jobs:
 
       - name: Install dependencies
         working-directory: ${{ env.CORE_DIR }}
-        shell: bash
         env:
           IMG2PDF: ${{ steps.meta.outputs.img2pdf }}
         run: |
@@ -240,7 +239,6 @@ jobs:
 
       - name: Build with PyInstaller
         working-directory: ${{ env.CORE_DIR }}
-        shell: bash
         env:
           IMG2PDF: ${{ steps.meta.outputs.img2pdf }}
         run: |
@@ -254,7 +252,6 @@ jobs:
         env:
           VERSION: ${{ needs.resolve.outputs.base_version }}
           IMG2PDF: ${{ steps.meta.outputs.img2pdf }}
-        shell: bash
         run: |
           mkdir -p artifacts
           cp "${{ env.CORE_DIR }}/dist/jmcomic" "artifacts/jmcomic-${VERSION}-linux-musl"
