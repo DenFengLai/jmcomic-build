@@ -192,7 +192,7 @@ jobs:
       - name: Package artifact
         shell: bash
         env:
-          VERSION: ${{ needs.resolve.outputs.base_version }}
+          VERSION: ${{ needs.resolve.outputs.full_version }}
           IMG2PDF: ${{ needs.resolve.outputs.img2pdf }}
           SUFFIX: ${{ matrix.artifact_suffix }}
         run: |
@@ -250,7 +250,7 @@ jobs:
 
       - name: Package artifact
         env:
-          VERSION: ${{ needs.resolve.outputs.base_version }}
+          VERSION: ${{ needs.resolve.outputs.full_version }}
           IMG2PDF: ${{ needs.resolve.outputs.img2pdf }}
         run: |
           mkdir -p artifacts
@@ -303,7 +303,7 @@ jobs:
 
       - name: Build and publish npm platform packages
         env:
-          VERSION: ${{ needs.resolve.outputs.base_version }}
+          VERSION: ${{ needs.resolve.outputs.full_version }}
           RELEASE_ASSETS_DIR: release-assets
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
           IMG2PDF: ${{ needs.resolve.outputs.img2pdf }}
@@ -312,7 +312,7 @@ jobs:
 
       - name: Modify the version number of jmcomic
         env:
-          VERSION: ${{ needs.resolve.outputs.base_version }}
+          VERSION: ${{ needs.resolve.outputs.full_version }}
         run: node scripts/inject-version.js
 
       - name: Publish npm of jmcomic
