@@ -224,6 +224,7 @@ jobs:
 
       - name: Install dependencies
         working-directory: ${{ env.CORE_DIR }}
+        shell: bash
         env:
           IMG2PDF: ${{ needs.resolve.outputs.img2pdf }}
         run: |
@@ -235,6 +236,7 @@ jobs:
 
       - name: Build with PyInstaller
         working-directory: ${{ env.CORE_DIR }}
+        shell: bash
         env:
           IMG2PDF: ${{ needs.resolve.outputs.img2pdf }}
         run: |
@@ -248,6 +250,7 @@ jobs:
         env:
           VERSION: ${{ needs.resolve.outputs.base_version }}
           IMG2PDF: ${{ needs.resolve.outputs.img2pdf }}
+        shell: bash
         run: |
           mkdir -p artifacts
           cp "${{ env.CORE_DIR }}/dist/jmcomic" "artifacts/jmcomic-${VERSION}-linux-musl"
@@ -280,6 +283,7 @@ jobs:
       - name: Create GitHub Release
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        shell: bash
         run: |
           set -euo pipefail
           TAG="${{ needs.resolve.outputs.tag }}"
@@ -315,6 +319,7 @@ jobs:
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
           NPM_TAG: ${{ needs.resolve.outputs.npm_tag }}
+        shell: bash
         run: |
           if [ -n "$NPM_TAG" ]; then
             npm publish --access public --tag "$NPM_TAG"
