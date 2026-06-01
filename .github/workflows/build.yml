@@ -169,7 +169,7 @@ jobs:
         working-directory: ${{ env.CORE_DIR }}
         shell: bash
         env:
-          IMG2PDF: ${{ steps.meta.outputs.img2pdf }}
+          IMG2PDF: ${{ needs.resolve.outputs.img2pdf }}
         run: |
           python -m pip install --upgrade pip
           python -m pip install -r requirements.txt
@@ -181,7 +181,7 @@ jobs:
         working-directory: ${{ env.CORE_DIR }}
         shell: bash
         env:
-          IMG2PDF: ${{ steps.meta.outputs.img2pdf }}
+          IMG2PDF: ${{ needs.resolve.outputs.img2pdf }}
         run: |
           pyinstaller specs/jmcomic.spec
           if [ "$IMG2PDF" = "true" ]; then
@@ -229,7 +229,7 @@ jobs:
       - name: Install dependencies
         working-directory: ${{ env.CORE_DIR }}
         env:
-          IMG2PDF: ${{ steps.meta.outputs.img2pdf }}
+          IMG2PDF: ${{ needs.resolve.outputs.img2pdf }}
         run: |
           python3 -m pip install --break-system-packages --upgrade pip
           python3 -m pip install --break-system-packages -r requirements.txt
@@ -240,7 +240,7 @@ jobs:
       - name: Build with PyInstaller
         working-directory: ${{ env.CORE_DIR }}
         env:
-          IMG2PDF: ${{ steps.meta.outputs.img2pdf }}
+          IMG2PDF: ${{ needs.resolve.outputs.img2pdf }}
         run: |
           pyinstaller specs/jmcomic.spec
           if [ "$IMG2PDF" = "true" ]; then
@@ -251,7 +251,7 @@ jobs:
       - name: Package artifact
         env:
           VERSION: ${{ needs.resolve.outputs.base_version }}
-          IMG2PDF: ${{ steps.meta.outputs.img2pdf }}
+          IMG2PDF: ${{ needs.resolve.outputs.img2pdf }}
         run: |
           mkdir -p artifacts
           cp "${{ env.CORE_DIR }}/dist/jmcomic" "artifacts/jmcomic-${VERSION}-linux-musl"
