@@ -241,7 +241,7 @@ jobs:
           IMG2PDF: ${{ needs.resolve.outputs.img2pdf }}
         run: |
           pyinstaller specs/jmcomic.spec
-          if [ "$IMG2PDF" = "true" ];then
+          if [ "$IMG2PDF" = "true" ]; then
             pyinstaller entry/entry_jmcomic.py --onefile --name jmcomic-img2pdf --hidden-import img2pdf          
           fi
           pyinstaller specs/jmv.spec
