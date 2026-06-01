@@ -19,6 +19,11 @@ on:
         description: "补丁后缀，例如 hotfix、fix.1、rebuild"
         required: false
         default: ""
+      img2pdf:
+        description: "发布特殊 img2pdf 版本并为 npm 添加 img2pd tag"
+        type: boolean
+        required: true
+        default: true
       force_build:
         description: "忽略“已发版”检查，强制打包但不发版（只适合 build 模式）"
         type: boolean
@@ -45,8 +50,11 @@ jobs:
     outputs:
       tag: ${{ steps.meta.outputs.tag }}
       full_version: ${{ steps.meta.outputs.full_version }}
+      base_version: ${{ steps.meta.outputs.base_version }}
       run_build: ${{ steps.meta.outputs.run_build }}
       run_publish: ${{ steps.meta.outputs.run_publish }}
+      img2pdf: ${{ steps.meta.outputs.img2pdf }}
+      npm_tag: ${{ steps.meta.outputs.npm_tag }}
     steps:
       - name: Resolve version and release state
         id: meta
@@ -55,6 +63,7 @@ jobs:
           INPUT_MODE: ${{ github.event_name == 'workflow_dispatch' && inputs.mode || 'release' }}
           INPUT_VERSION: ${{ github.event_name == 'workflow_dispatch' && inputs.version || '' }}
           INPUT_SUFFIX: ${{ github.event_name == 'workflow_dispatch' && inputs.suffix || '' }}
+          INPUT_IMG2PDF: ${{ github.event_name == 'workflow_dispatch' && inputs.img2pdf || 'false' }}
           FORCE_BUILD: ${{ github.event_name == 'workflow_dispatch' && inputs.force_build || 'false' }}
         shell: bash
         run: |
@@ -72,7 +81,12 @@ jobs:
           if [ -n "$INPUT_SUFFIX" ]; then
             TAG="${TAG}-${INPUT_SUFFIX}"
           fi
+          if [ "$INPUT_IMG2PDF" = "true" ] && [[ "$TAG" != *"img2pdf" ]]; then
+            TAG="${TAG}-img2pdf"
+          fi
+
           FULL_VERSION="${TAG#v}"
+          BASE_VERSION="${VERSION}"
 
           # 核心检查：判断 Release 是否已存在
           echo "Checking if release $TAG exists..."
@@ -106,12 +120,22 @@ jobs:
             fi
           fi
 
+          if [ "$INPUT_IMG2PDF" = "true" ]; then
+            NPM_TAG="img2pd"
+            echo "🚩 Special img2pdf npm release enabled; npm tag set to $NPM_TAG"
+          else
+            NPM_TAG=""
+          fi
+
           # 写入输出
           {
             echo "tag=$TAG"
             echo "full_version=$FULL_VERSION"
+            echo "base_version=$BASE_VERSION"
             echo "run_build=$RUN_BUILD"
             echo "run_publish=$RUN_PUBLISH"
+            echo "img2pdf=$INPUT_IMG2PDF"
+            echo "npm_tag=$NPM_TAG"
           } >> "$GITHUB_OUTPUT"
 
   build:
@@ -143,20 +167,29 @@ jobs:
 
       - name: Install dependencies
         working-directory: ${{ env.CORE_DIR }}
+        env:
+          IMG2PDF: ${{ needs.resolve.outputs.img2pdf }}
         run: |
           python -m pip install --upgrade pip
           python -m pip install -r requirements.txt
+          if [ "$IMG2PDF" = "true" ]; then
+            python -m pip install img2pdf
+          fi
 
       - name: Build with PyInstaller
         working-directory: ${{ env.CORE_DIR }}
         run: |
           pyinstaller specs/jmcomic.spec
+          if [ "$IMG2PDF" = "true" ]; then
+            pyinstaller specs/jmcomic.spec --name jmcomic-img2pdf --hidden-import img2pdf
+          fi
           pyinstaller specs/jmv.spec
 
       - name: Package artifact
         shell: bash
         env:
-          VERSION: ${{ needs.resolve.outputs.full_version }}
+          VERSION: ${{ needs.resolve.outputs.base_version }}
+          IMG2PDF: ${{ needs.resolve.outputs.img2pdf }}
           SUFFIX: ${{ matrix.artifact_suffix }}
         run: |
           mkdir -p artifacts
@@ -167,6 +200,9 @@ jobs:
           
           # 纯 Bash 复制重命名，无需 Python
           cp "${{ env.CORE_DIR }}/dist/jmcomic${EXT}" "artifacts/jmcomic-${VERSION}-${SUFFIX}${EXT}"
+          if [ "$IMG2PDF" = "true" ]; then
+            cp "${{ env.CORE_DIR }}/dist/jmcomic-img2pdf${EXT}" "artifacts/jmcomic-img2pdf-${VERSION}-${SUFFIX}${EXT}"
+          fi
           cp "${{ env.CORE_DIR }}/dist/jmv${EXT}" "artifacts/jmv-${VERSION}-${SUFFIX}${EXT}"
 
       - name: Upload artifact
@@ -188,22 +224,34 @@ jobs:
 
       - name: Install dependencies
         working-directory: ${{ env.CORE_DIR }}
+        env:
+          IMG2PDF: ${{ needs.resolve.outputs.img2pdf }}
         run: |
           python3 -m pip install --break-system-packages --upgrade pip
           python3 -m pip install --break-system-packages -r requirements.txt
+          if [ "$IMG2PDF" = "true" ]; then
+            python3 -m pip install --break-system-packages img2pdf
+          fi
 
       - name: Build with PyInstaller
         working-directory: ${{ env.CORE_DIR }}
         run: |
           pyinstaller specs/jmcomic.spec
+          if [ "$IMG2PDF" = "true" ]; then
+            pyinstaller specs/jmcomic.spec --name jmcomic-img2pdf --hidden-import img2pdf
+          fi
           pyinstaller specs/jmv.spec
 
       - name: Package artifact
         env:
-          VERSION: ${{ needs.resolve.outputs.full_version }}
+          VERSION: ${{ needs.resolve.outputs.base_version }}
+          IMG2PDF: ${{ needs.resolve.outputs.img2pdf }}
         run: |
           mkdir -p artifacts
           cp "${{ env.CORE_DIR }}/dist/jmcomic" "artifacts/jmcomic-${VERSION}-linux-musl"
+          if [ "$IMG2PDF" = "true" ]; then
+            cp "${{ env.CORE_DIR }}/dist/jmcomic-img2pdf" "artifacts/jmcomic-img2pdf-${VERSION}-linux-musl"
+          fi
           cp "${{ env.CORE_DIR }}/dist/jmv" "artifacts/jmv-${VERSION}-linux-musl"
 
       - name: Upload artifact
@@ -248,18 +296,26 @@ jobs:
 
       - name: Build and publish npm platform packages
         env:
-          VERSION: ${{ needs.resolve.outputs.full_version }}
+          VERSION: ${{ needs.resolve.outputs.base_version }}
           RELEASE_ASSETS_DIR: release-assets
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+          IMG2PDF: ${{ needs.resolve.outputs.img2pdf }}
+          NPM_TAG: ${{ needs.resolve.outputs.npm_tag }}
         run: node scripts/package.js
 
       - name: Modify the version number of jmcomic
         env:
-          VERSION: ${{ needs.resolve.outputs.full_version }}
+          VERSION: ${{ needs.resolve.outputs.base_version }}
         run: node scripts/inject-version.js
 
       - name: Publish npm of jmcomic
         working-directory: packages/jmcomic
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-        run: npm publish --access public
+          NPM_TAG: ${{ needs.resolve.outputs.npm_tag }}
+        run: |
+          if [ -n "$NPM_TAG" ]; then
+            npm publish --access public --tag "$NPM_TAG"
+          else
+            npm publish --access public
+          fi

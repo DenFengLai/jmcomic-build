@@ -4,6 +4,9 @@ import { execSync } from "child_process"
 
 const VERSION = process.env.VERSION
 const ASSETS_DIR = process.env.RELEASE_ASSETS_DIR || "release-assets"
+const IMG2PDF = process.env.IMG2PDF === "true"
+const IMG2PDF_SUFFIX = process.env.IMG2PDF_SUFFIX || "img2pdf"
+const IMG2PD_TAG = process.env.NPM_TAG || "img2pd"
 
 const OUT_DIR = path.resolve("packages/npm")
 
@@ -60,16 +63,20 @@ function getBinaryName(cli, platform) {
 }
 
 // 找 binary（基于 CI artifact 命名规则）
-function findBinary(cli, platformId) {
+function findBinary(cli, platformId, variant = "normal") {
   const files = fs.readdirSync(ASSETS_DIR)
 
-  const match = files.find(f =>
-    f.includes(cli) &&
-    f.includes(platformId)
-  )
+  const match = files.find(file => {
+    if (!file.includes(cli) || !file.includes(platformId)) {
+      return false
+    }
+
+    const isImg2pdf = file.includes(IMG2PDF_SUFFIX)
+    return variant === "img2pdf" ? isImg2pdf : !isImg2pdf
+  })
 
   if (!match) {
-    throw new Error(`Missing binary: ${cli} - ${platformId}`)
+    throw new Error(`Missing binary: ${cli} - ${platformId} (${variant})`)
   }
 
   return path.join(ASSETS_DIR, match)
@@ -97,12 +104,12 @@ module.exports.getBinaryPath = getBinaryPath
 }
 
 // 写 package.json
-function writePackageJson(dir, name, platform, cli) {
+function writePackageJson(dir, name, platform, cli, version) {
   const binName = getBinaryName(cli, platform)
 
   const pkg = {
     name,
-    version: VERSION,
+    version,
     os: [platform.os],
     cpu: [platform.cpu],
     main: "./index.js",
@@ -126,9 +133,14 @@ function writePackageJson(dir, name, platform, cli) {
 }
 
 // publish
-function publish(dir, name) {
-  console.log(`Publishing ${name}`)
-  execSync("npm publish --access public", {
+function publish(dir, name, tag = "") {
+  const publishArgs = ["npm", "publish", "--access", "public"]
+  if (tag) {
+    publishArgs.push("--tag", tag)
+  }
+
+  console.log(`Publishing ${name}${tag ? ` with tag ${tag}` : ""}`)
+  execSync(publishArgs.join(" "), {
     cwd: dir,
     stdio: "inherit"
   })
@@ -147,18 +159,32 @@ for (const cli of CLIS) {
 
     ensure(binDir)
 
-    const src = findBinary(cli.name, p.id)
+    const src = findBinary(cli.name, p.id, "normal")
     const binName = getBinaryName(cli, p)
     const dst = path.join(binDir, binName)
 
     fs.copyFileSync(src, dst)
-
     writeIndexJs(outDir, cli, p)
-    writePackageJson(outDir, pkgName, p, cli)
+    writePackageJson(outDir, pkgName, p, cli, VERSION)
 
     console.log(`Built ${pkgName}`)
-
     publish(outDir, pkgName)
+
+    if (IMG2PDF && cli.name === "jmcomic") {
+      const variantDir = path.join(OUT_DIR, `${cli.name}-${p.id}-${IMG2PDF_SUFFIX}`)
+      const variantBinDir = path.join(variantDir, "bin")
+      ensure(variantBinDir)
+
+      const variantSrc = findBinary(cli.name, p.id, "img2pdf")
+      const variantDst = path.join(variantBinDir, binName)
+      fs.copyFileSync(variantSrc, variantDst)
+
+      writeIndexJs(variantDir, cli, p)
+      writePackageJson(variantDir, pkgName, p, cli, `${VERSION}-${IMG2PDF_SUFFIX}`)
+
+      console.log(`Built ${pkgName} (${IMG2PDF_SUFFIX})`)
+      publish(variantDir, pkgName, IMG2PD_TAG)
+    }
   }
 }
 
