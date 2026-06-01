@@ -2,7 +2,7 @@
 
 
 a = Analysis(
-    ['entry/entry_jmcomic.py'],
+    ['../entry/entry_jmcomic.py'],
     pathex=[],
     binaries=[],
     datas=[],
