@@ -81,9 +81,9 @@ jobs:
           if [ -n "$INPUT_SUFFIX" ]; then
             TAG="${TAG}-${INPUT_SUFFIX}"
           fi
-          if [ "$INPUT_IMG2PDF" = "true" ] && [[ "$TAG" != *"img2pdf" ]]; then
-            TAG="${TAG}-img2pdf"
-          fi
+          # if [ "$INPUT_IMG2PDF" = "true" ] && [[ "$TAG" != *"img2pdf" ]]; then
+          #   TAG="${TAG}-img2pdf"
+          # fi
 
           FULL_VERSION="${TAG#v}"
           BASE_VERSION="${VERSION}"
