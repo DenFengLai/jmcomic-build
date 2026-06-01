@@ -121,7 +121,7 @@ jobs:
           fi
 
           if [ "$INPUT_IMG2PDF" = "true" ]; then
-            NPM_TAG="img2pd"
+            NPM_TAG="img2pdf"
             echo "🚩 Special img2pdf npm release enabled; npm tag set to $NPM_TAG"
           else
             NPM_TAG=""
@@ -319,11 +319,25 @@ jobs:
         working-directory: packages/jmcomic
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        shell: bash
+        run: |
+          npm publish --access public
+
+      - name: Modify the version number of jmcomic for img2pdf variant
+        if: needs.resolve.outputs.img2pdf == 'true'
+        env:
+          VERSION: ${{ needs.resolve.outputs.full_version }}-img2pdf
+        run: node scripts/inject-version.js
+
+      - name: Publish npm of jmcomic (img2pdf)
+        if: needs.resolve.outputs.img2pdf == 'true'
+        working-directory: packages/jmcomic
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
           NPM_TAG: ${{ needs.resolve.outputs.npm_tag }}
         shell: bash
         run: |
-          if [ -n "$NPM_TAG" ]; then
-            npm publish --access public --tag "$NPM_TAG"
-          else
-            npm publish --access public
-          fi
+          npm publish --access public --tag "$NPM_TAG"
+
+      - name: Restore jmcomic package.json
+        run: git checkout -- packages/jmcomic/package.json
