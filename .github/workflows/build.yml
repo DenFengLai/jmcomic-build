@@ -238,7 +238,7 @@ jobs:
         run: |
           pyinstaller specs/jmcomic.spec
           if [ "$IMG2PDF" = "true" ]; then
-            pyinstaller specs/jmcomic.spec --name jmcomic-img2pdf --hidden-import img2pdf
+            pyinstaller entry/entry_jmcomic.py --onefile --name jmcomic-img2pdf --hidden-import img2pdf          
           fi
           pyinstaller specs/jmv.spec
 
