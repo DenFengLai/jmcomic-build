@@ -233,9 +233,6 @@ jobs:
         run: |
           python3 -m pip install --break-system-packages --upgrade pip
           python3 -m pip install --break-system-packages -r requirements.txt
-          if [ "$IMG2PDF" = "true" ]; then
-            python3 -m pip install --break-system-packages img2pdf
-          fi
 
       - name: Build with PyInstaller
         working-directory: ${{ env.CORE_DIR }}
@@ -244,6 +241,7 @@ jobs:
         run: |
           pyinstaller specs/jmcomic.spec
           if [ "$IMG2PDF" = "true" ]; then
+            python3 -m pip install --break-system-packages img2pdf
             pyinstaller specs/jmcomic-img2pdf.spec   
           fi
           pyinstaller specs/jmv.spec
