@@ -181,11 +181,11 @@ jobs:
           IMG2PDF: ${{ needs.resolve.outputs.img2pdf }}
         run: |
           pyinstaller specs/jmcomic.spec
+          pyinstaller specs/jmv.spec
           if [ "$IMG2PDF" = "true" ]; then
             python3 -m pip install --break-system-packages img2pdf
             pyinstaller specs/jmcomic-img2pdf.spec
           fi
-          pyinstaller specs/jmv.spec
 
       - name: Package artifact
         shell: bash
@@ -238,11 +238,11 @@ jobs:
           IMG2PDF: ${{ needs.resolve.outputs.img2pdf }}
         run: |
           pyinstaller specs/jmcomic.spec
+          pyinstaller specs/jmv.spec
           if [ "$IMG2PDF" = "true" ]; then
             python3 -m pip install --break-system-packages img2pdf
             pyinstaller specs/jmcomic-img2pdf.spec   
           fi
-          pyinstaller specs/jmv.spec
 
       - name: Package artifact
         env:
