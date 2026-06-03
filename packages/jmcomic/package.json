@@ -10,10 +10,10 @@
   "bin": {
     "jmcomic": "cli.js"
   },
-  "author": "hect0x7,jmcomic",
+  "author": "hect0x7,DenFengLai",
   "repository": {
     "type": "git",
-    "url": "https://github.com/hect0x7/JMComic-Crawler-Python"
+    "url": "https://github.com/DenFengLai/jmcomic-build"
   },
   "license": "MIT",
   "type": "module",
@@ -22,7 +22,6 @@
   ],
   "optionalDependencies": {
     "@jmcomic/jmcomic-linux-gnu": "__VERSION__",
-    "@jmcomic/jmcomic-linux-musl": "__VERSION__",
     "@jmcomic/jmcomic-windows-x64": "__VERSION__",
     "@jmcomic/jmcomic-macos-arm64": "__VERSION__"
   }
