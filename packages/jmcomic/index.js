@@ -30,17 +30,17 @@ export function getBinaryPath() {
     return cachedBinaryPath
   }
 
-  if (platform === "linux") {
-    try {
+  // if (platform === "linux") {
+    // try {
       const p = require.resolve("@jmcomic/jmcomic-linux-gnu")
       cachedBinaryPath = path.join(path.dirname(p), "bin/jmcomic")
       return cachedBinaryPath
-    } catch {
-      const p = require.resolve("@jmcomic/jmcomic-linux-musl")
-      cachedBinaryPath = path.join(path.dirname(p), "bin/jmcomic")
-      return cachedBinaryPath
-    }
-  }
+  //   } catch {
+  //     const p = require.resolve("@jmcomic/jmcomic-linux-musl")
+  //     cachedBinaryPath = path.join(path.dirname(p), "bin/jmcomic")
+  //     return cachedBinaryPath
+  //   }
+  // }
 
   if (platform === "darwin") {
     const p = require.resolve("@jmcomic/jmcomic-macos-arm64")

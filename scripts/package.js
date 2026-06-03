@@ -33,11 +33,11 @@ const PLATFORMS = [
     os: "linux",
     cpu: "x64"
   },
-  {
-    id: "linux-musl",
-    os: "linux",
-    cpu: "x64"
-  },
+  // {
+  //   id: "linux-musl",
+  //   os: "linux",
+  //   cpu: "x64"
+  // },
   {
     id: "windows-x64",
     os: "win32",

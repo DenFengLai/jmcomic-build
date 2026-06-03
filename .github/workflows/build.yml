@@ -195,11 +195,11 @@ jobs:
           SUFFIX: ${{ matrix.artifact_suffix }}
         run: |
           mkdir -p artifacts
-          
+
           # 根据不同系统自动判断扩展名
           EXT=""
           if [[ "${{ matrix.runs_on }}" == "windows-latest" ]]; then EXT=".exe"; fi
-          
+
           # 纯 Bash 复制重命名，无需 Python
           cp "${{ env.CORE_DIR }}/dist/jmcomic${EXT}" "artifacts/jmcomic-${VERSION}-${SUFFIX}${EXT}"
           if [ "$IMG2PDF" = "true" ]; then
@@ -213,57 +213,57 @@ jobs:
           name: ${{ matrix.artifact_suffix }}
           path: artifacts/*
 
-  build-linux-musl:
-    needs: resolve
-    if: needs.resolve.outputs.run_build == 'true'
-    runs-on: ubuntu-latest
-    container: alpine:3.20
-    steps:
-      - uses: actions/checkout@v4
+  # build-linux-musl:
+  #   needs: resolve
+  #   if: needs.resolve.outputs.run_build == 'true'
+  #   runs-on: ubuntu-latest
+  #   container: alpine:3.20
+  #   steps:
+  #     - uses: actions/checkout@v4
 
-      - name: Install build tools
-        run: apk add --no-cache python3 py3-pip build-base git jq curl
+  #     - name: Install build tools
+  #       run: apk add --no-cache python3 py3-pip build-base git jq curl
 
-      - name: Install dependencies
-        working-directory: ${{ env.CORE_DIR }}
-        env:
-          IMG2PDF: ${{ needs.resolve.outputs.img2pdf }}
-        run: |
-          python3 -m pip install --break-system-packages --upgrade pip
-          python3 -m pip install --break-system-packages -r requirements.txt
+  #     - name: Install dependencies
+  #       working-directory: ${{ env.CORE_DIR }}
+  #       env:
+  #         IMG2PDF: ${{ needs.resolve.outputs.img2pdf }}
+  #       run: |
+  #         python3 -m pip install --break-system-packages --upgrade pip
+  #         python3 -m pip install --break-system-packages -r requirements.txt
 
-      - name: Build with PyInstaller
-        working-directory: ${{ env.CORE_DIR }}
-        env:
-          IMG2PDF: ${{ needs.resolve.outputs.img2pdf }}
-        run: |
-          pyinstaller specs/jmcomic.spec
-          pyinstaller specs/jmv.spec
-          if [ "$IMG2PDF" = "true" ]; then
-            python3 -m pip install --break-system-packages img2pdf
-            pyinstaller specs/jmcomic-img2pdf.spec   
-          fi
+  #     - name: Build with PyInstaller
+  #       working-directory: ${{ env.CORE_DIR }}
+  #       env:
+  #         IMG2PDF: ${{ needs.resolve.outputs.img2pdf }}
+  #       run: |
+  #         pyinstaller specs/jmcomic.spec
+  #         pyinstaller specs/jmv.spec
+  #         if [ "$IMG2PDF" = "true" ]; then
+  #           python3 -m pip install --break-system-packages img2pdf
+  #           pyinstaller specs/jmcomic-img2pdf.spec   
+  #         fi
 
-      - name: Package artifact
-        env:
-          VERSION: ${{ needs.resolve.outputs.full_version }}
-          IMG2PDF: ${{ needs.resolve.outputs.img2pdf }}
-        run: |
-          mkdir -p artifacts
-          cp "${{ env.CORE_DIR }}/dist/jmcomic" "artifacts/jmcomic-${VERSION}-linux-musl"
-          if [ "$IMG2PDF" = "true" ]; then
-            cp "${{ env.CORE_DIR }}/dist/jmcomic-img2pdf" "artifacts/jmcomic-img2pdf-${VERSION}-linux-musl"
-          fi
-          cp "${{ env.CORE_DIR }}/dist/jmv" "artifacts/jmv-${VERSION}-linux-musl"
+  #     - name: Package artifact
+  #       env:
+  #         VERSION: ${{ needs.resolve.outputs.full_version }}
+  #         IMG2PDF: ${{ needs.resolve.outputs.img2pdf }}
+  #       run: |
+  #         mkdir -p artifacts
+  #         cp "${{ env.CORE_DIR }}/dist/jmcomic" "artifacts/jmcomic-${VERSION}-linux-musl"
+  #         if [ "$IMG2PDF" = "true" ]; then
+  #           cp "${{ env.CORE_DIR }}/dist/jmcomic-img2pdf" "artifacts/jmcomic-img2pdf-${VERSION}-linux-musl"
+  #         fi
+  #         cp "${{ env.CORE_DIR }}/dist/jmv" "artifacts/jmv-${VERSION}-linux-musl"
 
-      - name: Upload artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: linux-musl
-          path: artifacts/*
+  #     - name: Upload artifact
+  #       uses: actions/upload-artifact@v4
+  #       with:
+  #         name: linux-musl
+  #         path: artifacts/*
 
   publish:
-    needs: [resolve, build, build-linux-musl]
+    needs: [resolve, build]
     # 严格拦截：即使前置任务成功，只要 run_publish 不为 true 绝对不执行
     if: needs.resolve.outputs.run_publish == 'true'
     runs-on: ubuntu-latest
@@ -284,7 +284,7 @@ jobs:
         run: |
           set -euo pipefail
           TAG="${{ needs.resolve.outputs.tag }}"
-          
+
           # 直接创建 Release。如果 Tag 不存在，gh 会自动以当前代码状态创建 Tag
           gh release create "$TAG" release-assets/* \
             --title "$TAG" \
@@ -337,3 +337,8 @@ jobs:
         shell: bash
         run: |
           npm publish --access public --tag "$NPM_TAG"
+
+      - name: Sync npmmirror jmcomic
+        shell: bash
+        run: |
+          curl -X PUT "https://registry-direct.npmmirror.com/-/package/@jmcomic/jmcomic/syncs"
