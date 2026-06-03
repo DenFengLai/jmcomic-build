@@ -132,8 +132,21 @@ function writePackageJson(dir, name, platform, cli, version) {
   )
 }
 
-// publish
-function publish(dir, name, tag = "") {
+async function syncNpmMirror(name) {
+  const url = `https://registry-direct.npmmirror.com/-/package/${encodeURIComponent(name)}/syncs`
+  console.log(`Requesting npm mirror sync for ${name}`)
+
+  const res = await fetch(url, { method: "PUT" })
+  const text = await res.text()
+
+  if (!res.ok) {
+    throw new Error(`Mirror sync failed for ${name}: ${res.status} ${res.statusText} ${text}`)
+  }
+
+  console.log(`Mirror sync requested for ${name}: ${res.status} ${res.statusText}`)
+}
+
+async function publish(dir, name, tag = "") {
   const publishArgs = ["npm", "publish", "--access", "public"]
   if (tag) {
     publishArgs.push("--tag", tag)
@@ -144,48 +157,59 @@ function publish(dir, name, tag = "") {
     cwd: dir,
     stdio: "inherit"
   })
+
+  try {
+    await syncNpmMirror(name)
+  } catch (error) {
+    console.warn(`Mirror sync failed for ${name}: ${error.message}`)
+  }
 }
 
 // =========================
 // 主流程
 // =========================
-ensure(OUT_DIR)
 
-for (const cli of CLIS) {
-  for (const p of PLATFORMS) {
-    const pkgName = `@jmcomic/${cli.name}-${p.id}`
-    const outDir = path.join(OUT_DIR, `${cli.name}-${p.id}`)
-    const binDir = path.join(outDir, "bin")
+async function main() {
+  ensure(OUT_DIR)
 
-    ensure(binDir)
+  for (const cli of CLIS) {
+    for (const p of PLATFORMS) {
+      const pkgName = `@jmcomic/${cli.name}-${p.id}`
+      const outDir = path.join(OUT_DIR, `${cli.name}-${p.id}`)
+      const binDir = path.join(outDir, "bin")
 
-    const src = findBinary(cli.name, p.id, "normal")
-    const binName = getBinaryName(cli, p)
-    const dst = path.join(binDir, binName)
+      ensure(binDir)
 
-    fs.copyFileSync(src, dst)
-    writeIndexJs(outDir, cli, p)
-    writePackageJson(outDir, pkgName, p, cli, VERSION)
+      const src = findBinary(cli.name, p.id, "normal")
+      const binName = getBinaryName(cli, p)
+      const dst = path.join(binDir, binName)
 
-    console.log(`Built ${pkgName}`)
-    publish(outDir, pkgName)
+      fs.copyFileSync(src, dst)
+      writeIndexJs(outDir, cli, p)
+      writePackageJson(outDir, pkgName, p, cli, VERSION)
 
-    if (IMG2PDF && cli.name === "jmcomic") {
-      const variantDir = path.join(OUT_DIR, `${cli.name}-${p.id}-${IMG2PDF_SUFFIX}`)
-      const variantBinDir = path.join(variantDir, "bin")
-      ensure(variantBinDir)
+      console.log(`Built ${pkgName}`)
+      await publish(outDir, pkgName)
 
-      const variantSrc = findBinary(cli.name, p.id, "img2pdf")
-      const variantDst = path.join(variantBinDir, binName)
-      fs.copyFileSync(variantSrc, variantDst)
+      if (IMG2PDF && cli.name === "jmcomic") {
+        const variantDir = path.join(OUT_DIR, `${cli.name}-${p.id}-${IMG2PDF_SUFFIX}`)
+        const variantBinDir = path.join(variantDir, "bin")
+        ensure(variantBinDir)
 
-      writeIndexJs(variantDir, cli, p)
-      writePackageJson(variantDir, pkgName, p, cli, `${VERSION}-${IMG2PDF_SUFFIX}`)
+        const variantSrc = findBinary(cli.name, p.id, "img2pdf")
+        const variantDst = path.join(variantBinDir, binName)
+        fs.copyFileSync(variantSrc, variantDst)
 
-      console.log(`Built ${pkgName} (${IMG2PDF_SUFFIX})`)
-      publish(variantDir, pkgName, IMG2PD_TAG)
+        writeIndexJs(variantDir, cli, p)
+        writePackageJson(variantDir, pkgName, p, cli, `${VERSION}-${IMG2PDF_SUFFIX}`)
+
+        console.log(`Built ${pkgName} (${IMG2PDF_SUFFIX})`)
+        await publish(variantDir, pkgName, IMG2PD_TAG)
+      }
     }
   }
+
+  console.log("All packages published")
 }
 
-console.log("All packages published")
+await main()
