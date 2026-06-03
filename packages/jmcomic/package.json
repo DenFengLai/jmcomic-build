@@ -8,7 +8,7 @@
   ],
   "main": "index.js",
   "bin": {
-    "jmcomic": "cli.js"
+    "jmcomic": "./cli.js"
   },
   "author": "hect0x7,DenFengLai",
   "repository": {
