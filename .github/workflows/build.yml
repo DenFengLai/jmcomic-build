@@ -63,7 +63,7 @@ jobs:
           INPUT_MODE: ${{ github.event_name == 'workflow_dispatch' && inputs.mode || 'release' }}
           INPUT_VERSION: ${{ github.event_name == 'workflow_dispatch' && inputs.version || '' }}
           INPUT_SUFFIX: ${{ github.event_name == 'workflow_dispatch' && inputs.suffix || '' }}
-          INPUT_IMG2PDF: ${{ github.event_name == 'workflow_dispatch' && inputs.img2pdf || 'false' }}
+          INPUT_IMG2PDF: ${{ github.event_name == 'workflow_dispatch' && inputs.img2pdf || 'true' }}
           FORCE_BUILD: ${{ github.event_name == 'workflow_dispatch' && inputs.force_build || 'false' }}
         shell: bash
         run: |
